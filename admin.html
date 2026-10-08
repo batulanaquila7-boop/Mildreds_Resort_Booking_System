@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Mildred's Resort</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="admin-body">
+
+    <header class="navbar">
+        <div class="logo">
+            <div class="logo-icon">MR</div>
+
+            <div>
+                <h2>Mildred's Resort</h2>
+                <span>Administrator</span>
+            </div>
+        </div>
+
+        <nav>
+            <a href="index.html">Customer Website</a>
+            <a href="index.html#booking">Booking Form</a>
+        </nav>
+    </header>
+
+    <main class="admin-main">
+
+        <section class="admin-header">
+            <div>
+                <p class="eyebrow">ADMINISTRATOR</p>
+                <h1>Booking Management</h1>
+                <p>
+                    View and manage all customer reservations submitted
+                    to Mildred's Resort.
+                </p>
+            </div>
+        </section>
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+
+                <div>
+                    <span id="totalBookings">0</span>
+                    <small>Total Bookings</small>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+
+                <div>
+                    <span id="pendingBookings">0</span>
+                    <small>Pending</small>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">✓</div>
+
+                <div>
+                    <span id="confirmedBookings">0</span>
+                    <small>Confirmed</small>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">✕</div>
+
+                <div>
+                    <span id="cancelledBookings">0</span>
+                    <small>Cancelled</small>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="admin-card">
+
+            <div class="admin-card-header">
+                <div>
+                    <h2>All Reservations</h2>
+                    <p>Review and manage customer bookings.</p>
+                </div>
+
+                <button class="btn danger" onclick="clearAllBookings()">
+                    Clear All Bookings
+                </button>
+            </div>
+
+            <div class="toolbar">
+
+                <div class="search-box">
+                    <span>🔎</span>
+
+                    <input
+                        type="text"
+                        id="search"
+                        placeholder="Search guest, room, or booking ID"
+                    >
+                </div>
+
+                <select id="filter">
+                    <option value="All">All Status</option>
+                    <option>Pending</option>
+                    <option>Confirmed</option>
+                    <option>Cancelled</option>
+                    <option>Completed</option>
+                </select>
+
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Guest</th>
+                            <th>Room</th>
+                            <th>Reservation</th>
+                            <th>Guests</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="bookingRows"></tbody>
+
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-bottom">
+            © 2026 Mildred's Resort - Administrator Dashboard
+        </div>
+    </footer>
+
+    <script>
+        const BOOKING_KEY = 'mildredsBookings';
+
+        function getBookings() {
+            return JSON.parse(
+                localStorage.getItem(BOOKING_KEY) || '[]'
+            );
+        }
+
+        function saveBookings(bookings) {
+            localStorage.setItem(
+                BOOKING_KEY,
+                JSON.stringify(bookings)
+            );
+        }
+
+        function renderAdminDashboard() {
+            const bookings = getBookings();
+
+            const search = document
+                .getElementById('search')
+                .value
+                .toLowerCase();
+
+            const filter = document.getElementById('filter').value;
+
+            document.getElementById('totalBookings').textContent =
+                bookings.length;
+
+            document.getElementById('pendingBookings').textContent =
+                bookings.filter(
+                    booking => booking.status === 'Pending'
+                ).length;
+
+            document.getElementById('confirmedBookings').textContent =
+                bookings.filter(
+                    booking => booking.status === 'Confirmed'
+                ).length;
+
+            document.getElementById('cancelledBookings').textContent =
+                bookings.filter(
+                    booking => booking.status === 'Cancelled'
+                ).length;
+
+            const filteredBookings = bookings.filter(booking => {
+                const bookingInfo = `
+                    ${booking.id}
+                    ${booking.name}
+                    ${booking.email}
+                    ${booking.room}
+                `.toLowerCase();
+
+                const matchesSearch =
+                    bookingInfo.includes(search);
+
+                const matchesFilter =
+                    filter === 'All' ||
+                    booking.status === filter;
+
+                return matchesSearch && matchesFilter;
+            });
+
+            const table = document.getElementById('bookingRows');
+
+            if (!filteredBookings.length) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-cell">
+                            No bookings found.
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+            table.innerHTML = filteredBookings
+                .map(booking => `
+                    <tr>
+                        <td>
+                            <strong>${booking.id}</strong>
+                        </td>
+
+                        <td>
+                            <strong>${booking.name}</strong>
+                            <small>${booking.email}</small>
+                            <small>${booking.phone}</small>
+                        </td>
+
+                        <td>
+                            <strong>${booking.room}</strong>
+                        </td>
+
+                        <td>
+                            <strong>${booking.checkIn}</strong>
+                            <span> to </span>
+                            <strong>${booking.checkOut}</strong>
+                        </td>
+
+                        <td>
+                            ${booking.adults} adult(s)<br>
+                            ${booking.children} child(ren)
+                        </td>
+
+                        <td>
+                            <span class="status ${booking.status.toLowerCase()}">
+                                ${booking.status}
+                            </span>
+                        </td>
+
+                        <td>
+                            <select
+                                onchange="updateStatus('${booking.id}', this.value)"
+                            >
+                                <option
+                                    ${booking.status === 'Pending' ? 'selected' : ''}
+                                >
+                                    Pending
+                                </option>
+
+                                <option
+                                    ${booking.status === 'Confirmed' ? 'selected' : ''}
+                                >
+                                    Confirmed
+                                </option>
+
+                                <option
+                                    ${booking.status === 'Cancelled' ? 'selected' : ''}
+                                >
+                                    Cancelled
+                                </option>
+
+                                <option
+                                    ${booking.status === 'Completed' ? 'selected' : ''}
+                                >
+                                    Completed
+                                </option>
+                            </select>
+
+                            <button
+                                class="delete-button"
+                                onclick="deleteBooking('${booking.id}')"
+                            >
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `)
+                .join('');
+        }
+
+        function updateStatus(id, status) {
+            const bookings = getBookings();
+
+            const updatedBookings = bookings.map(booking =>
+                booking.id === id
+                    ? { ...booking, status }
+                    : booking
+            );
+
+            saveBookings(updatedBookings);
+            renderAdminDashboard();
+        }
+
+        function deleteBooking(id) {
+            if (!confirm('Delete this booking?')) {
+                return;
+            }
+
+            const bookings = getBookings();
+
+            const updatedBookings = bookings.filter(
+                booking => booking.id !== id
+            );
+
+            saveBookings(updatedBookings);
+            renderAdminDashboard();
+        }
+
+        function clearAllBookings() {
+            const bookings = getBookings();
+
+            if (!bookings.length) {
+                return;
+            }
+
+            if (confirm('Delete all bookings?')) {
+                localStorage.removeItem(BOOKING_KEY);
+                renderAdminDashboard();
+            }
+        }
+
+        document
+            .getElementById('search')
+            .addEventListener(
+                'input',
+                renderAdminDashboard
+            );
+
+        document
+            .getElementById('filter')
+            .addEventListener(
+                'change',
+                renderAdminDashboard
+            );
+
+        renderAdminDashboard();
+    </script>
+
+</body>
+</html>
